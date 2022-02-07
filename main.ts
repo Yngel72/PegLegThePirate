@@ -2,6 +2,7 @@ namespace SpriteKind {
     export const Bottle = SpriteKind.create()
     export const Treasure = SpriteKind.create()
     export const Compass = SpriteKind.create()
+    export const OtherBottle = SpriteKind.create()
 }
 function clearSave () {
     blockSettings.clear()
@@ -54,7 +55,7 @@ function makeOtherBottle () {
         . . . . 1 9 c b 1 9 1 . . . . . 
         . . . . 1 9 c b d 9 1 . . . . . 
         . . . . 1 1 1 1 1 1 1 . . . . . 
-        `, SpriteKind.Bottle)
+        `, SpriteKind.OtherBottle)
     tiles.placeOnRandomTile(bottleMessage, assets.tile`myTile`)
     while (Math.abs(thePlayer.x - bottleMessage.x) > 200 || Math.abs(thePlayer.y - bottleMessage.y) > 200) {
         tiles.placeOnRandomTile(bottleMessage, assets.tile`myTile`)
@@ -62,16 +63,40 @@ function makeOtherBottle () {
 }
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Treasure, function (sprite, otherSprite) {
     otherSprite.destroy()
-    theCompass.destroy()
+    theCompass.setImage(img`
+        . . . . 5 5 5 5 5 5 5 . . . . . 
+        . . 5 5 . . . . . . . 5 5 . . . 
+        . 5 . . . . . . . . . . . 5 . . 
+        . 5 . . . . . . . . . . . 5 . . 
+        5 . . . . . . . . . . . . . 5 . 
+        5 . . . . . . . . . . . . . 5 . 
+        5 . . . . . . . . . . . . . 5 . 
+        5 . . . . . . . . . . . . . 5 . 
+        5 . . . . . . . . . . . . . 5 . 
+        5 . . . . . . . . . . . . . 5 . 
+        5 . . . . . . . . . . . . . 5 . 
+        . 5 . . . . . . . . . . . 5 . . 
+        . 5 . . . . . . . . . . . 5 . . 
+        . . 5 5 . . . . . . . 5 5 . . . 
+        . . . . 5 5 5 5 5 5 5 . . . . . 
+        . . . . . . . . . . . . . . . . 
+        `)
     makeOtherBottle()
     info.changeScoreBy(1)
     if (info.score() > 10) {
         game.over(true)
     }
 })
+sprites.onOverlap(SpriteKind.Player, SpriteKind.OtherBottle, function (sprite, otherSprite) {
+    otherSprite.destroy()
+    foundBottle = true
+    createOtherTreasure()
+})
 function loadGame () {
     thePlayer.setPosition(blockSettings.readNumber("playerX"), blockSettings.readNumber("playerY"))
     foundBottle = blockSettings.readNumber("foundBottle") == 1
+    score = blockSettings.readNumber("score")
+    info.changeScoreBy(score)
     if (foundBottle) {
         createTreasure()
         theTreasure.setPosition(blockSettings.readNumber("treasureX"), blockSettings.readNumber("treasureY"))
@@ -178,6 +203,7 @@ function createOtherTreasure () {
 function saveGame () {
     blockSettings.writeNumber("playerX", thePlayer.x)
     blockSettings.writeNumber("playerY", thePlayer.y)
+    blockSettings.writeNumber("score", score)
     if (foundBottle) {
         blockSettings.writeNumber("foundBottle", 1)
         blockSettings.writeNumber("treasureX", theTreasure.x)
@@ -197,6 +223,7 @@ let kraken: Sprite = null
 let enemiesYPositions: number[] = []
 let enemiesXPositions: number[] = []
 let theTreasure: Sprite = null
+let score = 0
 let bottleMessage: Sprite = null
 let boatName = ""
 let foundBottle = false
@@ -504,4 +531,12 @@ game.onUpdate(function () {
 })
 game.onUpdateInterval(1000, function () {
     saveGame()
+})
+game.onUpdateInterval(500, function () {
+    if (info.score() > 9) {
+        game.over(true)
+    }
+})
+game.onUpdateInterval(500, function () {
+    score = info.score()
 })
